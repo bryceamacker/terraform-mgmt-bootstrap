@@ -1,0 +1,51 @@
+# ==========================================================================
+# Example demo pipeline serving as a template showing how to run Terraform
+# ==========================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - .azdo/*
+
+variables:
+  # The linked KeyVault variable group
+  # Holds: pipeline-sp-id, pipeline-sp-secret, azure-tenant-id, azure-sub-id
+  - group: shared-secrets
+  - name: STATE_RESGRP
+    value: __CHANGE_ME__
+  - name: STATE_ACCOUNT
+    value: __CHANGE_ME__
+  - name: STATE_CONTAINER
+    value: tfstate
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - bash: |
+      terraform init -input=false -backend=true -reconfigure \
+      -backend-config="resource_group_name=$(STATE_RESGRP)" \
+      -backend-config="storage_account_name=$(STATE_ACCOUNT)" \
+      -backend-config="container_name=$(STATE_CONTAINER)"
+    displayName: Initialize Terraform backend state
+
+  - bash: |
+      terraform plan -input=false \
+    displayName: Plan Terraform changes
+    env:
+      ARM_CLIENT_ID: $(pipeline-sp-id)
+      ARM_CLIENT_SECRET: $(pipeline-sp-secret)
+      ARM_TENANT_ID: $(azure-tenant-id)
+      ARM_SUBSCRIPTION_ID: $(azure-sub-id)
+
+  - bash: |
+      terraform apply -input=false \
+    displayName: Apply Terraform changes
+    env:
+      ARM_CLIENT_ID: $(pipeline-sp-clientid)
+      ARM_CLIENT_SECRET: $(pipeline-sp-secret)
+      ARM_TENANT_ID: $(azure-tenant-id)
+      ARM_SUBSCRIPTION_ID: $(azure-sub-id)

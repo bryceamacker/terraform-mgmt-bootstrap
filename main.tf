@@ -5,21 +5,21 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 #
-# Core management resources
+# Core hub / management resources
 #
 resource "azurerm_resource_group" "mgmt" {
-  name     = var.mgmt_res_group
+  name     = var.hub_res_group
   location = var.region
 }
 
 # Holds Terraform shared state (already exists, created by bootstrap.sh)
 resource "azurerm_storage_account" "state_storage" {
-  name                     = var.state_sa_name
+  name                     = var.state_storage
   resource_group_name      = azurerm_resource_group.mgmt.name
   location                 = azurerm_resource_group.mgmt.location
   account_tier             = "Standard"
-  account_kind             = "BlobStorage"
-  account_replication_type = "RAGRS"
+  account_kind             = "StorageV2"
+  account_replication_type = "LRS"
   allow_blob_public_access = false
 }
 
@@ -27,35 +27,20 @@ resource "azurerm_storage_account" "state_storage" {
 # Shared container registry
 #
 resource "azurerm_container_registry" "shared_acr" {
-  name                = var.shared_acr_name
+  name                = "${var.prefix}logs"
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
-  sku                 = "Standard"
+  sku                 = var.acr_sku
   admin_enabled       = false
 }
 
 #
-# Shared KeyVault & policy to allow Azure DevOps SP to access
+# Shared Log Analytics
 #
-resource "azurerm_key_vault" "shared_kv" {
-  name                       = var.shared_keyvault_name
-  location                   = azurerm_resource_group.mgmt.location
-  resource_group_name        = azurerm_resource_group.mgmt.name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  soft_delete_enabled        = true
-  soft_delete_retention_days = 30
-
-  sku_name = "standard"
+resource "azurerm_log_analytics_workspace" "shared_logs" {
+  name                = "${var.prefix}acr"
+  resource_group_name = azurerm_resource_group.mgmt.name
+  location            = azurerm_resource_group.mgmt.location
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
 }
-
-resource "azurerm_key_vault_access_policy" "azdo_keyvault_access_policy" {
-  key_vault_id = azurerm_key_vault.shared_kv.id
-
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = azuread_service_principal.azdo_keyvault_sp.id
-
-  secret_permissions = [
-    "get", "list"
-  ]
-}
-

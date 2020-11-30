@@ -13,7 +13,7 @@ resource "azuredevops_serviceendpoint_azurerm" "keyvault_access" {
   service_endpoint_name = "keyvault-access"
   credentials {
     serviceprincipalid  = azuread_application.azdo_keyvault_app.application_id
-    serviceprincipalkey = random_password.password.result
+    serviceprincipalkey = random_password.azdo_keyvault_password.result
   }
   lifecycle {
     ignore_changes = [credentials]
@@ -21,4 +21,8 @@ resource "azuredevops_serviceendpoint_azurerm" "keyvault_access" {
   azurerm_spn_tenantid      = data.azurerm_client_config.current.tenant_id
   azurerm_subscription_id   = data.azurerm_client_config.current.subscription_id
   azurerm_subscription_name = "Management Subscription"
+}
+
+output "keyvault_access_connection_id" {
+  value = azuredevops_serviceendpoint_azurerm.keyvault_access.id
 }

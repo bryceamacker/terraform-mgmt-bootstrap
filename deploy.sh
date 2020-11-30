@@ -2,13 +2,14 @@
 set -e
 
 echo -e "\n\e[34m╔══════════════════════════════════╗"
-echo -e "║\e[32m    Deploy Management Infra 🚀\e[34m    ║"
+echo -e "║\e[33m    Deploy Management Infra 🚀\e[34m    ║"
+echo -e "║\e[32m        Terraform Script\e[34m          ║"
 echo -e "╚══════════════════════════════════╝"
 echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
 
 # Load env vars from .env file
 if [ ! -f ".env" ]; then
-  echo -e "\e[31m»»» 💥  Unable to find .env file, please create file and try again!"
+  echo -e "\e[31m»»» 💥 Unable to find .env file, please create file and try again!"
   exit
 else
   echo -e "\n\e[34m»»» 🧩 \e[96mLoading environmental variables\e[0m..."
@@ -17,19 +18,19 @@ fi
 
 az > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo -e "\e[31m»»» ⚠️  Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up"
+  echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up"
   exit
 fi
 
 terraform version > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo -e "\e[31m»»» ⚠️  Terraform is not installed! 😥 Please go to https://www.terraform.io/downloads.html to set it up"
+  echo -e "\e[31m»»» ⚠️ Terraform is not installed! 😥 Please go to https://www.terraform.io/downloads.html to set it up"
   exit
 fi
 
 export SUB_NAME=$(az account show --query name -o tsv)
 if [[ -z $SUB_NAME ]]; then
-  echo -e "\n\e[31m»»» ⚠️  You are not logged in to Azure!"
+  echo -e "\n\e[31m»»» ⚠️ You are not logged in to Azure!"
   exit
 fi
 export TENANT_ID=$(az account show --query tenantId -o tsv)
@@ -49,15 +50,13 @@ case ${answer:0:1} in
 esac
 
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
-terraform init -input=false \
-  -backend-config="resource_group_name=$BACKEND_RESGRP" \
-  -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
-  -backend-config="container_name=$BACKEND_CONTAINER" \
+terraform init -input=false -backend=true -reconfigure \
+  -backend-config="resource_group_name=$TF_VAR_hub_res_group" \
+  -backend-config="storage_account_name=$TF_VAR_state_storage" \
+  -backend-config="container_name=$TF_VAR_state_container" 
 
 echo -e "\n\e[34m»»» 📜 \e[96mTerraform plan\e[0m...\n"
-terraform plan -var azdo_pat=$AZDO_PAT -out=tfplan $1
+terraform plan
 
 echo -e "\n\e[34m»»» 🚀 \e[96mTerraform apply\e[0m...\n"
-terraform apply -auto-approve tfplan
-
-rm -rf tfplan
+terraform apply -auto-approve
