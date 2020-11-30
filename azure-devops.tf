@@ -5,7 +5,7 @@ provider "azuredevops" {
 }
 
 data "azuredevops_project" "project" {
-  project_name = var.azdo_project_name
+  name = var.azdo_project_name
 }
 
 resource "azuredevops_serviceendpoint_azurerm" "keyvault_access" {

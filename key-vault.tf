@@ -44,7 +44,7 @@ resource "azurerm_key_vault_secret" "pipeline-sp-secret" {
 }
 resource "azurerm_key_vault_secret" "pipeline-sp-clientid" {
   name         = "pipeline-sp-clientid"
-  value        = azuread_application.azdo_pipeline_app.id
+  value        = azuread_service_principal.azdo_pipeline_sp.application_id
   key_vault_id = azurerm_key_vault.shared_kv.id
   depends_on   = [azurerm_key_vault_access_policy.user_keyvault_access_policy]
 }

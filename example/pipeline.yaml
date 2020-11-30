@@ -15,28 +15,44 @@ variables:
   # Holds: pipeline-sp-id, pipeline-sp-secret, azure-tenant-id, azure-sub-id
   - group: shared-secrets
   - name: STATE_RESGRP
-    value: __CHANGE_ME__
+    value: mgmtdemo-rg
   - name: STATE_ACCOUNT
-    value: __CHANGE_ME__
+    value: mgmtdemostate
   - name: STATE_CONTAINER
     value: tfstate
+  - name: ENV_NAME
+    value: demo
+  - name: ENV_REGION
+    value: uksouth
 
 pool:
   vmImage: "ubuntu-latest"
 
 steps:
+  - checkout: self
+
   - bash: |
       terraform init -input=false -backend=true -reconfigure \
       -backend-config="resource_group_name=$(STATE_RESGRP)" \
       -backend-config="storage_account_name=$(STATE_ACCOUNT)" \
-      -backend-config="container_name=$(STATE_CONTAINER)"
+      -backend-config="container_name=$(STATE_CONTAINER)" \
+      -backend-config="key=$(ENV_NAME)"
+    workingDirectory: ./example
     displayName: Initialize Terraform backend state
+    env:
+      ARM_CLIENT_ID: $(pipeline-sp-clientid)
+      ARM_CLIENT_SECRET: $(pipeline-sp-secret)
+      ARM_TENANT_ID: $(azure-tenant-id)
+      ARM_SUBSCRIPTION_ID: $(azure-sub-id)
 
   - bash: |
       terraform plan -input=false \
     displayName: Plan Terraform changes
+    workingDirectory: ./example
     env:
-      ARM_CLIENT_ID: $(pipeline-sp-id)
+      TF_VARS_name: $(ENV_NAME)
+      TF_VARS_region: $(ENV_REGION)
+      ARM_CLIENT_ID: $(pipeline-sp-clientid)
       ARM_CLIENT_SECRET: $(pipeline-sp-secret)
       ARM_TENANT_ID: $(azure-tenant-id)
       ARM_SUBSCRIPTION_ID: $(azure-sub-id)
@@ -44,7 +60,10 @@ steps:
   - bash: |
       terraform apply -input=false \
     displayName: Apply Terraform changes
+    workingDirectory: ./example
     env:
+      TF_VARS_name: $(ENV_NAME)
+      TF_VARS_region: $(ENV_REGION)
       ARM_CLIENT_ID: $(pipeline-sp-clientid)
       ARM_CLIENT_SECRET: $(pipeline-sp-secret)
       ARM_TENANT_ID: $(azure-tenant-id)

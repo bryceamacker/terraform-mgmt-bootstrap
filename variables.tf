@@ -1,12 +1,11 @@
-# Needs to match backend config 
 variable "state_storage" {
   type        = string
-  description = "Storage account created by bootstrap, set with BACKEND_STORAGE_ACCOUNT"
+  description = "Storage account created by bootstrap to hold all Terraform state"
 }
 
-variable "hub_res_group" {
+variable "mgmt_res_group" {
   type        = string
-  description = "Shared management resource group, set with BACKEND_RESGRP"
+  description = "Shared management resource group"
 }
 
 variable "region" {

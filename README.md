@@ -1,15 +1,15 @@
-# Terraform Management Hub with Bootstrap for Azure DevOps
+# Terraform Bootstrap for Shared Management & CI/CD
 
-This repo holds a set of run-usable generic scripts and Terraform configuration to "bootstrap" a project in order to be able to start using Terraform with Azure and running Azure DevOps Pipelines to deploy further resources via Terraform
+This repo holds a set of reusable generic scripts and Terraform configuration to "bootstrap" a project in order to be able to start using Terraform with Azure. This paves the way for the set up of Azure DevOps Pipelines to deploy further resources. This aligns with the common "hub & spoke" style of Azure architecture. where one shared set of management resources are used to support the deployment and management of one or more spokes through automated CI/CD pipelines. These spokes could be separate subscriptions or simply multiple environments in different resource groups for hosting simultaneous instances of an app.
 
-This aligns with the common hub & spoke model where one shared set of management resources are used to support the deployment and management of one or more spokes through automated CI/CD pipelines. These spokes could be separate subscriptions or simply multiple environments in different resource groups for hosting simultaneous app.
+Note. There is no dependency or relation to the [hub & spoke network topology](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/hub-spoke-network-topology)
 
 There's four main outcomes of this repo:
 
 - Bootstrap of backend state in Azure Storage for all Terraform to use.
-- Deployment (and redeployment) set of shared, management or hub resources.
+- Deployment (and redeployment) set of shared, management resources.
 - Creation of service principals with role assignments in Azure AD.
-- Initial configuration of Azure DevOps.
+- Initial configuration of Azure DevOps or GitHub Actions
 
 All of the scripts in this repo are intended to be run manually and infrequently, and called from an administrators local machine or Azure Cloud Shell. There is no automation or CI/CD, this is by design - the purpose of this repo is to allow further CI/CD to happen.
 
@@ -28,12 +28,14 @@ Each of the two mains scripts ('bootstrap' and 'deploy') checks most of these pr
 
 Before running any of the scripts, the configuration and input variables need to be set. This is done in an `.env` file, and this file is read and parsed by scripts
 
+Note. `.tfvars` file is not used, this is intentional. The dotenv format is easier to parse, meaning we can use the values for bash scripts and other purposes
+
 Copy `.env.sample` to `.env` and set values for all variables:
 
 - `TF_VAR_state_storage` - The name of the storage account to hold Terraform state.
-- `TF_VAR_hub_res_group` - The shared resource group for all hub resources, including the storage account.
+- `TF_VAR_mgmt_res_group` - The shared resource group for all hub resources, including the storage account.
 - `TF_VAR_state_container` - Name of the blob container to hold Terraform state (default: `tfstate`).
-- `TF_VAR_prefix` - A prefix added to all hub resources, pick your project name or other prefix to give the resources unique names.
+- `TF_VAR_prefix` - A prefix added to all resources, pick your project name or other prefix to give the resources unique names.
 - `TF_VAR_region` - Azure region to deploy all resources into.
 - `TF_VAR_azdo_org_url` - URL of Azure DevOps org to use, e.g. https<span>://dev.azure.com/foobar</span>
 - `TF_VAR_azdo_project_name` - Name of the Azure DevOps project in the above org.
@@ -49,9 +51,9 @@ To solve this a bootstrap script is used which creates the initial storage accou
 
 This script should never need running a second time even if the other management resources are modified
 
-# Management / Hub Resource Deployment
+# Management Resource Deployment
 
-The deployment of the rest of the shared management hub resources is done via Terraform, and the various .tf files in the root of this repo.
+The deployment of the rest of the shared management resources is done via Terraform, and the various .tf files in the root of this repo.
 
 - From bash run `./deploy.sh`
 
@@ -79,12 +81,12 @@ The creation of a Azure DevOps variable group linked to KeyVault can not be done
 - `azure-tenant-id`
 - `azure-sub-id`
 
-These variables can be used in subsequent Azure DevOps pipelines
+These variables can be used in subsequent Azure DevOps pipelines.
 
 # Next Steps
 
 This repo is intended to lay the ground work for Azure DevOps pipelines to be set up to deploy further resources. The shared variable group is a key part of enabling this, but the configuration of those pipelines is something deeply project specific, so is not covered here.
 
-An example pipeline is given in the example directory, showing how to run a pipeline using the hub shared state and the service principal that has been setup using secure variables
+An example pipeline is given in the `azdo/` directory, showing how to run a pipeline using the shared state and the service principal that has been setup using secure variables
 
 If you are using a mono-repo, the whole of this repo can be dropped in as a sub-folder, in order to keep the Terraform separate from any Terraform you wish to use in your other "spoke" pipelines

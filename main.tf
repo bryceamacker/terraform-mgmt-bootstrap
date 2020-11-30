@@ -5,10 +5,10 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 #
-# Core hub / management resources
+# Core management resources
 #
 resource "azurerm_resource_group" "mgmt" {
-  name     = var.hub_res_group
+  name     = var.mgmt_res_group
   location = var.region
 }
 
