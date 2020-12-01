@@ -30,7 +30,7 @@ echo -e "\e[34m»»» 📌 \e[96mService connection ID: $SERVICE_CONN_ID\e[0m"
 echo -e "\e[34m»»» 🔑 \e[96mKeyVault name: $KV_NAME\e[0m"
 
 # Call REST API to create the variable group
-# Note. 'pipeline-sp-secret' must match the name of the secret created in main.tf
+# Note. Variable names must match the names of the secrets created in key-vault.tf
 curl -Ss -X POST "$TF_VAR_azdo_org_url/$TF_VAR_azdo_project_name/_apis/distributedtask/variablegroups?api-version=6.1-preview.2" \
 --user user:$TF_VAR_azdo_pat -H 'Content-Type: application/json; charset=utf-8' \
 --data-binary @- << EOF
