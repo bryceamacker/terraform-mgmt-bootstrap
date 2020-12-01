@@ -9,7 +9,7 @@ There's four main outcomes of this repo:
 - Bootstrap of backend state in Azure Storage for all Terraform to use.
 - Deployment (and redeployment) set of shared, management resources.
 - Creation of service principals with role assignments in Azure AD.
-- Initial configuration of Azure DevOps or GitHub Actions
+- Initial configuration of Azure DevOps
 
 All of the scripts in this repo are intended to be run manually and infrequently, and called from an administrators local machine or Azure Cloud Shell. There is no automation or CI/CD, this is by design - the purpose of this repo is to allow further CI/CD to happen.
 

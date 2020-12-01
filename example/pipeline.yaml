@@ -36,7 +36,7 @@ steps:
       -backend-config="resource_group_name=$(STATE_RESGRP)" \
       -backend-config="storage_account_name=$(STATE_ACCOUNT)" \
       -backend-config="container_name=$(STATE_CONTAINER)" \
-      -backend-config="key=$(ENV_NAME)"
+      -backend-config="key=$(ENV_NAME).tfstate"
     workingDirectory: ./example
     displayName: Initialize Terraform backend state
     env:
@@ -46,24 +46,24 @@ steps:
       ARM_SUBSCRIPTION_ID: $(azure-sub-id)
 
   - bash: |
-      terraform plan -input=false \
+      terraform plan -input=false
     displayName: Plan Terraform changes
     workingDirectory: ./example
     env:
-      TF_VARS_name: $(ENV_NAME)
-      TF_VARS_region: $(ENV_REGION)
+      TF_VAR_name: $(ENV_NAME)
+      TF_VAR_region: $(ENV_REGION)
       ARM_CLIENT_ID: $(pipeline-sp-clientid)
       ARM_CLIENT_SECRET: $(pipeline-sp-secret)
       ARM_TENANT_ID: $(azure-tenant-id)
       ARM_SUBSCRIPTION_ID: $(azure-sub-id)
 
   - bash: |
-      terraform apply -input=false \
+      terraform apply -input=false -auto-approve
     displayName: Apply Terraform changes
     workingDirectory: ./example
     env:
-      TF_VARS_name: $(ENV_NAME)
-      TF_VARS_region: $(ENV_REGION)
+      TF_VAR_name: $(ENV_NAME)
+      TF_VAR_region: $(ENV_REGION)
       ARM_CLIENT_ID: $(pipeline-sp-clientid)
       ARM_CLIENT_SECRET: $(pipeline-sp-secret)
       ARM_TENANT_ID: $(azure-tenant-id)
