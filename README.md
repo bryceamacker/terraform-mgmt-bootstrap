@@ -63,7 +63,7 @@ This Terraform creates & configures the following:
 - Storage Account for holding Terraform state (also in bootstrap).
 - Azure Container Registry.
 - Azure Log Analytics.
-- KeyVault for holding credentials and secrets used by Azure DevOps Pipelines.
+- Key Vault for holding credentials and secrets used by Azure DevOps Pipelines.
 - Service Principal, with IAM role assignment to access the KeyVault "Key Vault Reader (preview)".
 - A second Service Principal (to be used for pipelines), with IAM role "Contributor" at the subscription level.
 - KeyVault access policy for above Service Principal to allow it to get & list secrets.
@@ -83,10 +83,17 @@ The creation of a Azure DevOps variable group linked to KeyVault can not be done
 
 These variables can be used in subsequent Azure DevOps pipelines.
 
-# Next Steps
+# Next Steps & Example Environment
 
-This repo is intended to lay the ground work for Azure DevOps pipelines to be set up to deploy further resources. The shared variable group is a key part of enabling this, but the configuration of those pipelines is something deeply project specific, so is not covered here.
+This repo is intended to lay the ground work for Azure DevOps pipelines to be set up to deploy further resources. The shared variable group is a key part of enabling this, but the configuration of those pipelines is something clearly project & environment specific, so is not covered here.
 
-An example pipeline is given in the `azdo/` directory, showing how to run a pipeline using the shared state and the service principal that has been setup using secure variables
+An a working pipeline with demo Terraform is given in the `example/` directory. This environment is nothing more than a resource group & a storage account for illustrative purposes. The focus is the pipeline file; `example/deploy.yaml` this carries out the deployment as follows:
 
-If you are using a mono-repo, the whole of this repo can be dropped in as a sub-folder, in order to keep the Terraform separate from any Terraform you wish to use in your other "spoke" pipelines
+- Uses the above `shared-secrets` variable group
+- Runs using the service principal details held in Key Vault
+- Keeps state in the management backend state storage account
+- Carries out standard Terraform init / plan / apply
+
+Refer to the [example/deploy.yaml](example/deploy.yaml) file for further details
+
+If you are using a mono-repo, the whole of this repo can be dropped in as a sub-folder, in order to keep the Terraform separate from any Terraform you wish to use in your other pipelines.
