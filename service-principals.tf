@@ -26,7 +26,7 @@ resource "azuread_application_password" "azdo_keyvault_sp_password" {
 
 resource "azurerm_role_assignment" "azdo_keyvault_sp" {
   scope                            = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
-  role_definition_name             = "Key Vault Reader (preview)"
+  role_definition_name             = "Key Vault Reader"
   principal_id                     = azuread_service_principal.azdo_keyvault_sp.id
   skip_service_principal_aad_check = true
 }
