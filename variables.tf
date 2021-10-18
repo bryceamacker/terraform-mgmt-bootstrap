@@ -33,8 +33,9 @@ variable "azdo_project_name" {
 
 variable "azdo_pat" {
   type        = string
-  description = "Access token with rights in Azure DevOps to set up service connections"
-}
+  description = "PAT (This variable is only used during bootstrapping, terraform will use the value stored in key vault normally)"
+  default = ""
+  }
 
 #
 #

@@ -15,11 +15,13 @@ else
   echo -e "\n\e[34m»»» 🧩 \e[96mLoading environmental variables\e[0m..."
   export $(egrep -v '^#' ".env" | xargs)
 fi
+# Get PAT from key vault
+PAT=$(az keyvault secret show --name azdo-pat --vault-name ${TF_VAR_prefix}edjekeyvault | jq -r '.value')
 
 # Get project id from project name in AzDo
 echo -e "\e[34m»»» 🔍 \e[96mGetting project ID from Azure DevOps\e[0m..."
 PROJ_ID=$(curl -Ss -X GET "$TF_VAR_azdo_org_url/_apis/projects?api-version=6.1-preview.4" \
---user user:$TF_VAR_azdo_pat \
+--user user:$PAT \
 | jq -r ".value[] | select (.name == \"$TF_VAR_azdo_project_name\") | .id")
 echo -e "\e[34m»»» 🔍 \e[96mGot ID: $PROJ_ID\e[0m"
 
@@ -32,7 +34,7 @@ echo -e "\e[34m»»» 🔑 \e[96mKeyVault name: $KV_NAME\e[0m"
 # Call REST API to create the variable group
 # Note. Variable names must match the names of the secrets created in key-vault.tf
 curl -Ss -X POST "$TF_VAR_azdo_org_url/$TF_VAR_azdo_project_name/_apis/distributedtask/variablegroups?api-version=6.1-preview.2" \
---user user:$TF_VAR_azdo_pat -H 'Content-Type: application/json; charset=utf-8' \
+--user user:$PAT -H 'Content-Type: application/json; charset=utf-8' \
 --data-binary @- << EOF
 {
   "name": "$VARGROUP_NAME",

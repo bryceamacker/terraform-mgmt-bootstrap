@@ -40,6 +40,9 @@ echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"
 echo -e "\e[34m»»»   • \e[96mSubscription: \e[33m$SUB_NAME\e[0m"
 echo -e "\e[34m»»»   • \e[96mTenant:       \e[33m$TENANT_ID\e[0m\n"
 
+read -p "Paste the Person Access Token (PAT) to use and save in Key Vault: " azdo_pat
+
+
 read -p " - Are these details correct, do you want to continue (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
@@ -51,7 +54,7 @@ case ${answer:0:1} in
 esac
 
 # Baseline Azure resources
-echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
+echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group, key vault, and storage account\e[0m..."
 az group create --resource-group $TF_VAR_mgmt_res_group --location $TF_VAR_region -o table
 az storage account create --resource-group $TF_VAR_mgmt_res_group \
 --name $TF_VAR_state_storage --location $TF_VAR_region \
@@ -61,6 +64,10 @@ az storage account create --resource-group $TF_VAR_mgmt_res_group \
 SA_KEY=$(az storage account keys list --account-name $TF_VAR_state_storage --query "[0].value" -o tsv)
 az storage container create --account-name $TF_VAR_state_storage --name $TF_VAR_state_container --account-key $SA_KEY -o table
 
+# Key vault to store PAT
+az keyvault create --location $TF_VAR_region --name ${TF_VAR_prefix}keyvault --resource-group $TF_VAR_mgmt_res_group
+PAT_ID=$(az keyvault secret set --name azdo-pat --vault-name ${TF_VAR_prefix}keyvault --value $azdo_pat | jq -r '.id')
+
 # Set up Terraform
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 terraform init -input=false -backend=true -reconfigure \
@@ -68,7 +75,12 @@ terraform init -input=false -backend=true -reconfigure \
   -backend-config="storage_account_name=$TF_VAR_state_storage" \
   -backend-config="container_name=$TF_VAR_state_container" 
 
-# Import the storage account & res group into state
+# Import the storage account, key vault, and res group into state
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
-terraform import azurerm_resource_group.mgmt "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group"
-terraform import azurerm_storage_account.state_storage "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group/providers/Microsoft.Storage/storageAccounts/$TF_VAR_state_storage"
+terraform import -var "azdo_pat=$azdo_pat" azurerm_resource_group.mgmt "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group"
+terraform import -var "azdo_pat=$azdo_pat" azurerm_storage_account.state_storage "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group/providers/Microsoft.Storage/storageAccounts/$TF_VAR_state_storage"
+terraform import -var "azdo_pat=$azdo_pat" azurerm_key_vault.shared_kv "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group/providers/Microsoft.KeyVault/vaults/${TF_VAR_prefix}keyvault"
+
+# Replace placeholder value to use PAT in Key Vault
+# sed -i 's/\spersonal_access_token\s=\s"PAT"/ personal_access_token = try(data.azurerm_key_vault_secret.azdo_pat_kv.value, var.azdo_pat_local)/gm' azure-devops.tf
+terraform plan

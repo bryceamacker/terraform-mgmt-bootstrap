@@ -1,7 +1,14 @@
+
+module "kv" {
+  source = "./key-vault"
+  parent_key_vault = {
+    shared_kv_id = azurerm_key_vault.shared_kv.id 
+  }
+}
+
 provider "azuredevops" {
-  version               = ">= 0.0.1"
   org_service_url       = var.azdo_org_url
-  personal_access_token = var.azdo_pat
+  personal_access_token = var.azdo_pat == "" ? "${module.kv.azdo_pat}" : var.azdo_pat
 }
 
 data "azuredevops_project" "project" {
