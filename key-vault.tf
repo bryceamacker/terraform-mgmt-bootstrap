@@ -37,7 +37,7 @@ resource "azurerm_key_vault_access_policy" "user_keyvault_access_policy" {
 # Store the Pipeline SP details as secrets in KeyVault
 resource "azurerm_key_vault_secret" "pipeline-sp-secret" {
   name         = "pipeline-sp-secret"
-  value        = random_password.azdo_pipeline_password.result
+  value        = azuread_service_principal_password.azdo_pipeline_sp.value
   key_vault_id = azurerm_key_vault.shared_kv.id
   depends_on   = [azurerm_key_vault_access_policy.user_keyvault_access_policy]
 }

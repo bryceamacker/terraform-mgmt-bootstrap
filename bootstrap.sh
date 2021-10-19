@@ -8,12 +8,12 @@ echo -e "╚══════════════════════�
 echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
 
 # Load env variables from .env file
-if [ ! -f ".env" ]; then
+if [ ! -f "env.auto.tfvars" ]; then
   echo -e "\e[31m»»» 💥 Unable to find .env file, please create file and try again!"
   exit
 else
   echo -e "\n\e[34m»»» 🧩 \e[96mLoading environmental variables\e[0m..."
-  export $(egrep -v '^#' ".env" | xargs)
+  export $(egrep '^[a-zA-Z]' "env.auto.tfvars" | awk '{print "TF_VAR_" $0}' | xargs)
 fi
 
 az > /dev/null 2>&1

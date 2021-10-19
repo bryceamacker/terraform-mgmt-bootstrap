@@ -20,8 +20,7 @@ resource "azuredevops_serviceendpoint_azurerm" "keyvault_access" {
   service_endpoint_name = "keyvault-access"
   credentials {
     serviceprincipalid  = azuread_application.azdo_keyvault_app.application_id
-    # This needs to be replaced with the variable "azuread_application_password" "azdo_keyvault_sp_password".value
-    serviceprincipalkey = random_password.azdo_keyvault_password.result
+    serviceprincipalkey = azuread_service_principal_password.azdo_keyvault_sp.value
   }
   lifecycle {
     ignore_changes = [credentials]
